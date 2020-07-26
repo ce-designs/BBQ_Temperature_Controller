@@ -27,7 +27,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 // pins
 #define FanOnOffPin 13	// Fan pin
 #define	HighLedPin 12	// LED pin for HIGH temp
-#define	pwmPin 10		// PWM pin for controling the fan speed
+#define	pwmPin 3		// PWM pin for controling the fan speed
 #define MAXDO   1		// DO pin of Adafruit_MAX31855
 #define MAXCS   2		// CS pin of Adafruit_MAX31855
 #define MAXCLK  11		// CLK pin of Adafruit_MAX31855
