@@ -62,7 +62,7 @@ const unsigned long blinkInterval = 500;		// 0.5 seconds
 const unsigned long saveTimeInterval = 5000;	// 5 seconds
 const unsigned long OnOffDelay = 60000;			// 60 seconds
 const unsigned int pwmMinValue = 0;				// minimum value for pwmValue, must be between 0-79
-const byte fanDisplaySpeedMax = 38;				// Max value for fan speed
+const byte fanDisplaySpeedMax = 38;				// Max value for fan speed (max = 79)
 
 
 /// <summary>
@@ -187,7 +187,8 @@ void loop()
 		if (currentTemp != lastKnownTemp)
 		{
 			lastKnownTemp = currentTemp;
-			UpdateMainMenuCurrentTemp();
+			if (selectedMenuOption == MAIN_MENU)
+				UpdateMainMenuCurrentTemp();
 		}
 	}
 
