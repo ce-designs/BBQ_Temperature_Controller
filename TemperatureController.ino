@@ -208,13 +208,14 @@ void loop()
 	case TOO_LOW:
 		if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 			TurnFanOn();
+		StopBlinking();
 		break;
 	case IN_RANGE:
 		if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 		{
-			TurnFanOff();
-			StopBlinking();
+			TurnFanOff();			
 		}
+		StopBlinking();
 		break;
 	}
 }
