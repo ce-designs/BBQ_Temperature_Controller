@@ -38,6 +38,11 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define SET_MIN_MENU 2	// adjust minimum temperature
 #define SET_FAN_MENU 3	// adjust fan speed
 
+// temperature status
+#define IN_RANGE 0
+#define TOO_HIGH 1
+#define TOO_LOW 2
+
 // Thermocouple
 Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
 
@@ -192,19 +197,30 @@ void loop()
 		}
 	}
 
-	if (currentTemp > maxTemp) // check if temperature is too high
+	switch (GetTemperatureStatus())
 	{
+	case TOO_HIGH:
 		BlinkHighTempLed();
+		break;
+	case TOO_LOW:
+		if (!fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay))
+			TurnFanOn();
+		break;
+	case IN_RANGE:
+		if (fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay))
+		{
+			TurnFanOff();
+			StopBlinking();
+		}
+		break;
 	}
-	else if (currentTemp < minTemp && !fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay)) // check if temperature is too low
-	{	
-		TurnFanOn();
-	}
-	else if (fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay)) // temperature is within the accepted range, so check if the fan is still on. 
-	{
-		TurnFanOff();
-		StopBlinking();
-	}
+}
+
+byte GetTemperatureStatus()
+{
+	if (currentTemp > maxTemp)  return TOO_HIGH;
+	if (currentTemp < minTemp)  return TOO_LOW;
+	return IN_RANGE;
 }
 
 /// <summary>
