@@ -8,6 +8,7 @@ int addrInitialized = 0;			// EEPROM address for storing the initialized paramet
 int addrMaxTemp = 1;				// EEPROM address for storing the maxTemp value		
 int addrMinTemp = 2;				// EEPROM address for storing the minTemp value
 int addrFanSpeed = 3;				// EEPROM address for storing the fanSpeed value
+int addrFanOnOffDelay = 4;			// EEPROM address for storing the fan on/off delay
 const byte eepromInitialized = 1;	// constant for determining if the the EEPROM has been initialized
 
 // LCD
@@ -28,15 +29,16 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define FanOnOffPin 13	// Fan pin
 #define	HighLedPin 12	// LED pin for HIGH temp
 #define	pwmPin 3		// PWM pin for controling the fan speed
-#define MAXDO   1		// DO pin of Adafruit_MAX31855
+#define MAXDO   0		// DO pin of Adafruit_MAX31855
 #define MAXCS   2		// CS pin of Adafruit_MAX31855
 #define MAXCLK  11		// CLK pin of Adafruit_MAX31855
 
 // menu options
-#define MAIN_MENU 0		// Main menu or overview
-#define SET_MAX_MENU 1	// adjust maximum temperature
-#define SET_MIN_MENU 2	// adjust minimum temperature
-#define SET_FAN_MENU 3	// adjust fan speed
+#define MAIN_MENU 0			// Main menu or overview
+#define SET_MAX_MENU 1		// adjust maximum temperature
+#define SET_MIN_MENU 2		// adjust minimum temperature
+#define SET_FAN_MENU 3		// adjust fan speed
+#define SET_DELAY_MENU 4	// fan on/off delay menu
 
 // temperature status
 #define IN_RANGE 0
@@ -53,6 +55,7 @@ byte minTemp = 20;						// the minimum temperature
 byte highTempLedPinState = LOW;			// for storing the high temp LED state (on/off)	
 byte selectedMenuOption = MAIN_MENU;	// the currrent selected menu
 byte fanDisplaySpeed = 50;				// fan speed value for the display (0-50)
+byte fanDelay = 60;						// Fan on/off delay in seconds
 double lastKnownTemp = 0;				// for storing the last known temperatur
 int currentTemp;						// for storing the current temperature
 byte pwmValue = 79;						// value 0-79 adjust fan duty cycle
@@ -65,7 +68,6 @@ unsigned long lastFanOnOffTime;			// for storing the time that the fan was turne
 const unsigned long tempReadInterval = 5000;	// 5 seconds
 const unsigned long blinkInterval = 500;		// 0.5 seconds
 const unsigned long saveTimeInterval = 5000;	// 5 seconds
-const unsigned long OnOffDelay = 60000;			// 60 seconds
 const unsigned int pwmMinValue = 0;				// minimum value for pwmValue, must be between 0-79
 const byte fanDisplaySpeedMax = 38;				// Max value for fan speed (max = 79)
 
@@ -86,6 +88,7 @@ void setup()
 	maxTemp = EEPROM.read(addrMaxTemp);
 	minTemp = EEPROM.read(addrMinTemp);
 	fanDisplaySpeed = EEPROM.read(addrFanSpeed);
+	fanDelay = EEPROM.read(addrFanOnOffDelay);
 	// check if the stored fan display speed value is too large and correct if necessary
 	if (fanDisplaySpeed > fanDisplaySpeedMax)
 	{
@@ -135,7 +138,7 @@ void loop()
 	{
 	case btnRIGHT:	// goto to next menu
 	{
-		if (selectedMenuOption == SET_FAN_MENU)
+		if (selectedMenuOption == SET_DELAY_MENU)
 			selectedMenuOption = MAIN_MENU;
 		else
 			selectedMenuOption++;
@@ -146,7 +149,7 @@ void loop()
 	case btnLEFT:	// goto to previous menu
 	{
 		if (selectedMenuOption == MAIN_MENU)
-			selectedMenuOption = SET_FAN_MENU;
+			selectedMenuOption = SET_DELAY_MENU;
 		else
 			selectedMenuOption--;
 		PrintCorrectMenu();
@@ -203,11 +206,11 @@ void loop()
 		BlinkHighTempLed();
 		break;
 	case TOO_LOW:
-		if (!fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay))
+		if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 			TurnFanOn();
 		break;
 	case IN_RANGE:
-		if (fanIsOn && (millis() - lastFanOnOffTime >= OnOffDelay))
+		if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 		{
 			TurnFanOff();
 			StopBlinking();
@@ -231,6 +234,7 @@ void SaveSettings()
 	EEPROM.update(addrMaxTemp, maxTemp);
 	EEPROM.update(addrMinTemp, minTemp);
 	EEPROM.update(addrFanSpeed, fanDisplaySpeed);
+	EEPROM.update(addrFanOnOffDelay, fanDelay);
 }
 
 /// <summary>
@@ -274,6 +278,14 @@ void UpdateSetting(int btnPressed)
 				fanDisplaySpeed++;
 		}
 		SetFanSpeed();
+		break;
+	}
+	case SET_DELAY_MENU:
+	{
+		if (btnPressed == btnDOWN)
+			fanDelay--;
+		if (btnPressed == btnUP)
+			fanDelay++;
 		break;
 	}
 	}
@@ -418,6 +430,11 @@ void PrintCorrectMenu()
 		PrintFanSpeedMenu();
 		break;
 	}
+	case SET_DELAY_MENU:
+	{
+		PrintFanDelayMenu();
+		break;
+	}	
 	}
 }
 
@@ -524,6 +541,20 @@ void PrintFanSpeedMenu()
 	lcd.setCursor(0, 1);
 	lcd.print(fanDisplaySpeed);
 	if (fanDisplaySpeed < 100)
+		lcd.print(" ");
+}
+
+/// <summary>
+/// prints the "Fan Speed" menu to the LCD
+/// </summary>
+void PrintFanDelayMenu()
+{
+	lcd.clear();
+	lcd.setCursor(0, 0);
+	lcd.print("Fan on/off delay");
+	lcd.setCursor(0, 1);
+	lcd.print(fanDelay);
+	if (fanDelay < 100)
 		lcd.print(" ");
 }
 
