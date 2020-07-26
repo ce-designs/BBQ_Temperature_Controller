@@ -172,6 +172,7 @@ void loop()
 	}
 	case btnSELECT:	// Save button
 	{
+		delay(200);
 		PrintSaveSettingMenu();
 		lastSaveBtnClickTime = millis();
 		while (millis() - lastSaveBtnClickTime < saveTimeInterval)
