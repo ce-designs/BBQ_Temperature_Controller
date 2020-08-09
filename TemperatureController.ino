@@ -71,7 +71,6 @@ const unsigned long saveTimeInterval = 5000;	// 5 seconds
 const unsigned int pwmMinValue = 0;				// minimum value for pwmValue, must be between 0-79
 const byte fanDisplaySpeedMax = 38;				// Max value for fan speed (max = 79)
 
-
 /// <summary>
 /// SETUP
 /// </summary>
@@ -207,16 +206,18 @@ void loop()
 		BlinkHighTempLed();
 		break;
 	case TOO_LOW:
-		if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
+		if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
+			TurnFanOff();
+		else if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 			TurnFanOn();
-		StopBlinking();
+		if (highTempLedPinState == HIGH)
+			StopBlinking();
 		break;
 	case IN_RANGE:
-		if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
-		{
+		if (fanIsOn)
 			TurnFanOff();			
-		}
-		StopBlinking();
+		if (highTempLedPinState == HIGH)
+			StopBlinking();
 		break;
 	}
 }
@@ -332,7 +333,10 @@ void TurnFanOn()
 	SetFanSpeed();
 	fanIsOn = true;
 	if (selectedMenuOption == MAIN_MENU)
+	{
 		UpdateMainMenuFanState();
+		UpdateMainMenuLowTempIndication();
+	}
 	lastFanOnOffTime = millis();
 }
 
@@ -345,7 +349,10 @@ void TurnFanOff()
 	digitalWrite(FanOnOffPin, LOW);
 	fanIsOn = false;
 	if (selectedMenuOption == MAIN_MENU)
+	{
 		UpdateMainMenuFanState();
+		UpdateMainMenuLowTempIndication();
+	}
 	lastFanOnOffTime = millis();
 }
 
@@ -499,6 +506,22 @@ void UpdateMainMenuFanState()
 	else
 	{
 		lcd.print("OFF");
+	}
+}
+
+/// <summary>
+/// Updates just the fan state (on/off) in the main menu
+/// </summary>
+void UpdateMainMenuLowTempIndication()
+{	
+	lcd.setCursor(15, 1);
+	if (currentTemp < minTemp)
+	{		
+		lcd.print("!");
+	}
+	else
+	{
+		lcd.print("!");
 	}
 }
 
