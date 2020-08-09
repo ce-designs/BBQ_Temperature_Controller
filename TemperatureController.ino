@@ -206,10 +206,10 @@ void loop()
 		BlinkHighTempLed();
 		break;
 	case TOO_LOW:
-		if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
-			TurnFanOff();
-		else if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
+		if (!fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
 			TurnFanOn();
+		else if (fanIsOn && (millis() - lastFanOnOffTime >= (fanDelay * 1000)))
+			TurnFanOff();
 		if (highTempLedPinState == HIGH)
 			StopBlinking();
 		break;
